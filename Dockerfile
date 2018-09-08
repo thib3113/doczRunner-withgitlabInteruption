@@ -13,7 +13,7 @@ COPY ./runner.js .
 
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod 755 /usr/local/bin/docker-entrypoint.sh
-RUN ln -s usr/local/bin/docker-entrypoint.sh / # backwards compat
+RUN ln -s usr/local/bin/docker-entrypoint.sh /
 
 #generate working dir
 RUN mkdir working
