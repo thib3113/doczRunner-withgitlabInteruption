@@ -127,17 +127,27 @@ class Runner {
         else {
             let expressPort = process.env.PORT || 3001;
 
-            app.use('/', proxy({ target: 'http://127.0.0.1:3000', changeOrigin: true }));
-
-            app.get('/gitlab', (req, res) => {
-
+            app.use(function(req, res, next) {
                 let gitlabEvent = req.getHeader('X-Gitlab-Event');
 
                 console.log(`receive gitlabEvent : ${gitlabEvent}`);
                 console.log(`status : ${req.object_attributes.status}`);
 
                 console.log(req);
+                next();
             });
+
+            app.use('/', proxy({ target: 'http://127.0.0.1:3000', changeOrigin: true }));
+
+            // app.get('/gitlab', (req, res) => {
+            //
+            //     let gitlabEvent = req.getHeader('X-Gitlab-Event');
+            //
+            //     console.log(`receive gitlabEvent : ${gitlabEvent}`);
+            //     console.log(`status : ${req.object_attributes.status}`);
+            //
+            //     console.log(req);
+            // });
 
             app.listen(expressPort, () => console.log(`Runner listening on port ${expressPort}!`));
         }
