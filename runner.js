@@ -12,6 +12,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 
+console.log("start to build docz");
 //need to install docz locally in the project
 const docz = spawn(path.resolve(`./node_modules/.bin/docz${process.platform === 'win32' ? '.cmd' : ''}`), ['dev'],
     { cwd: path.resolve('.') });
@@ -19,10 +20,7 @@ const docz = spawn(path.resolve(`./node_modules/.bin/docz${process.platform === 
 docz.stdout.on('data', (data) => {
     if (data.toString().match(/Your application is running/ig)) {
         console.log('builded');
-        if (argv.test) {
-            //if test mode, the test succeed
-            process.exit(0);
-        }
+        startRunner()
     }
     if (data.toString().match(/fail/ig)) {
         console.error(`docz: ${data}`);
@@ -41,21 +39,27 @@ docz.on('close', (code) => {
     }
 });
 
-//if test, no express
-if (!argv.test) {
-    let expressPort = process.env.PORT||3001;
+function startRunner() {
+   console.log("build success");
+   if (argv.test) {
+        //if test mode, the test succeed
+        process.exit(0);
+    }
+    else{
+       let expressPort = process.env.PORT||3001;
 
-    app.use('/', proxy({target: '127.0.0.1:3000', changeOrigin: true}));
+       app.use('/', proxy({target: 'http://127.0.0.1:3000', changeOrigin: true}));
 
-    app.get('/gitlab', (req, res) => {
+       app.get('/gitlab', (req, res) => {
 
-        let gitlabEvent = req.getHeader("X-Gitlab-Event");
+           let gitlabEvent = req.getHeader("X-Gitlab-Event");
 
-        console.log(`receive gitlabEvent : ${gitlabEvent}`);
-        console.log(`status : ${req.object_attributes.status}`);
+           console.log(`receive gitlabEvent : ${gitlabEvent}`);
+           console.log(`status : ${req.object_attributes.status}`);
 
-        console.log(req);
-    });
+           console.log(req);
+       });
 
-    app.listen(expressPort, () => console.log(`Runner listening on port ${expressPort}!, Docz running on port 3000`));
+       app.listen(expressPort, () => console.log(`Runner listening on port ${expressPort}!`));
+   }
 }

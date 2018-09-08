@@ -10,5 +10,3 @@ COPY ./package-lock.json .
 RUN npm i
 
 CMD npm start
-
-EXPOSE 3000
