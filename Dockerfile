@@ -3,7 +3,7 @@ MAINTAINER Citopia <citopia.fr>
 
 COPY ./runner.js .
 COPY ./package.json .
-COPY ./package-lock.json.json .
+COPY ./package-lock.json .
 
 RUN npm i
 
