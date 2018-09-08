@@ -45,4 +45,5 @@ else
      fi
 fi
 
-exit 0
+#start node
+npm start
