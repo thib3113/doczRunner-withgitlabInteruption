@@ -145,15 +145,6 @@ class Runner {
             app.use(async (req, res, next) => {
                 let gitlabEvent = req.header('X-Gitlab-Event');
                 let gitlabToken = req.header('X-Gitlab-Token');
-                //token qsdgsdthshgbyry534fs21df65841
-                try {
-                    console.log(`receive gitlabEvent : ${gitlabEvent}`);
-                    console.log(`receive gitlabToken : ${gitlabToken}`);
-                    console.log(`status : ${req.body.object_attributes.status}`);
-                }
-                catch (e) {
-                    console.error(e);
-                }
 
                 if (gitlabToken !== process.env.GITLAB_TOKEN) {
                     //if not the correct token
