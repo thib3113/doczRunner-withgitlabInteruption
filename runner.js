@@ -24,10 +24,13 @@ app.use(bodyParser.json());
 
 class Runner {
     constructor(args) {
+        console.log(`GITLAB_TOKEN ${process.env.GITLAB_TOKEN}`);
+
         this.localMode = false;
         if (args.workingPath) {
             this.currentPath = args.workingPath;
             this.localMode = true;
+            console.log("use localMode");
         }
         else {
             this.basePath = path.resolve(__dirname);
@@ -147,12 +150,15 @@ class Runner {
                 let gitlabToken = req.header('X-Gitlab-Token');
 
                 if (gitlabToken !== process.env.GITLAB_TOKEN) {
+                    if(gitlabToken)
+                        console.warn(`bad gitlab token : ${gitlabToken}`);
+
                     //if not the correct token
                     next();
                 }
                 else {
                     try {
-                        if (req && req.body && req.body.object_attributes && req.body.object_attributes.status && req.body.object_attributes.status === 'success') {
+                        if (gitlabEvent === "Pipeline Hook" && req && req.body && req.body.object_attributes && req.body.object_attributes.status && req.body.object_attributes.status === 'success') {
                             console.log('receive request to download new docz');
 
                             //it's success, clone new repo, and kill me
