@@ -197,11 +197,13 @@ class Runner {
     }
 
     async start() {
-        if (!this.localMode)
+        if (!this.localMode){
             await this.checkCurrentDoc();
+            
+            //check the number of folder, 10 will be enough
+            await this.checkNumberOfFolder(10);
+        }
 
-        //check the number of folder, 10 will be enough
-        await this.checkNumberOfFolder(10);
 
         console.log('start to build docz');
         //need to install docz locally in the project
