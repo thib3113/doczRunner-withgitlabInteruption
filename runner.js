@@ -129,7 +129,7 @@ class Runner {
             let expressPort = process.env.PORT || 3001;
 
             app.use(function(req, res, next) {
-                let gitlabEvent = req.getHeader('X-Gitlab-Event');
+                let gitlabEvent = req.header('X-Gitlab-Event');
                 //token qsdgsdthshgbyry534fs21df65841
                 console.log(`receive gitlabEvent : ${gitlabEvent}`);
                 console.log(`status : ${req.object_attributes.status}`);
