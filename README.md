@@ -28,6 +28,7 @@ Example, insteed of sending SSH_KEY, you can use :
 Volume
 ---
 You can bind this volumes
-|path in the container|description|
+
+| path in the container | description |
 |--|--|
 | /app/working | Contain multiple folders with clones of your documentation (the folder `current` is a symlink to the current folder used) |
