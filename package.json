@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node runner.js",
     "test": "node runner.js --test",
-    "debug": "node %NODE_DEBUG_OPTION%  runner.js",
+    "debug": "node %NODE_DEBUG_OPTION% runner.js .",
     "docz:dev": "docz dev",
     "docz:build": "docz build"
   },
@@ -14,10 +14,14 @@
     "type": "git",
     "url": "git@***REMOVED***:citopia/styleguide.git"
   },
+  "bin": {
+    "docz-runner": "runner.js"
+  },
   "author": "Citopia",
   "license": "ISC",
   "devDependencies": {
-    "@types/prop-types": "^15.5.5"
+    "@types/prop-types": "^15.5.5",
+    "@types/yargs": "^11.1.1"
   },
   "dependencies": {
     "body-parser": "latest",

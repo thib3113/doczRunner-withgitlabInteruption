@@ -2,89 +2,191 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const argv = require('yargs').argv;
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const proxy = require('http-proxy-middleware');
 const simpleGit = require('simple-git');
+const argv = require('yargs')
+    .command('$0 [path]', 'start the runner', (yargs) => {
+        yargs.positional('sourcePath', {
+            describe: 'use a sourcePath to disable the automatic git clone',
+            type    : 'string',
+        });
+    })
+    .help()
+    .argv;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 class Runner {
-    // process;
-    // basePath;
+    constructor(args) {
+        this.localMode = false;
+        if(args.workingPath){
+            this.currentPath = args.workingPath;
+            this.localMode = true;
+        }
+        else{
+            this.basePath = path.resolve(__dirname);
+            this.workingPath = path.join(this.basePath, 'working');
+            this.currentPath = path.join(this.workingPath, 'current');
+            this.git = simpleGit(this.workingPath);
+            this.gitRepoUrl = process.env.GIT_REPO;
+            if (!this.gitRepoUrl)
+                throw new Error('empty git repo url !');
+        }
 
-    constructor() {
-        this.basePath = path.resolve(__dirname);
-        this.workingPath = path.join(this.basePath, 'working');
-        this.git = simpleGit(this.workingPath);
-        this.gitRepoUrl = process.env.GIT_REPO;
-        if (!this.gitRepoUrl)
-            throw new Error('empty git repo url !');
+        this.restarting = false;
+        this.runnerStarted = false;
+        this.needToQuit = false;
     }
 
     cloneLast() {
-        return new Promise((resolve, reject) => {
-            this.git.clone(this.gitRepoUrl, `docz-${(new Date()).getTime()}`, () => {
-                debugger;
+        return new Promise(async (resolve, reject) => {
+
+            let newPath = `docz-${(new Date()).getTime()}`;
+            this.git.clone(this.gitRepoUrl, newPath, (err) => {
+                if (err) return reject(err);
+
+                let timerPath = path.join(this.workingPath, newPath);
+                let git = simpleGit(timerPath);
+                new Promise((res, rej) => {
+                    git.revparse(['HEAD'], (err, tag) => {
+                        tag = tag.trim();
+                        let tagPath = path.join(this.workingPath, `docz-${tag}`);
+                        fs.renameSync(timerPath, tagPath);
+                        resolve(tagPath);
+                    });
+                });
+
             });
         });
     }
 
-    async checkFolders() {
-        if (!fs.existsSync(path.join(this.basePath, 'documentationFolder'))) {
+    async checkCurrentDoc() {
+        if (!fs.existsSync(path.join(this.workingPath, 'current'))) {
             //the folder doesn't exist
-            await this.cloneLast();
+            let actualPath = await this.cloneLast();
 
-            // await new Promise((res, rej)=>{
-            //     fs.mkdir(path,function(e){
-            //         if(e) return rej(e);
-            //         res();
-            //     });
-            // })
+            //generate the symlink
+            this.setCurrent(actualPath);
         }
+    }
 
+    setCurrent(currentPath){
+        fs.symlinkSync(currentPath, this.currentPath);
+    }
 
+    stdoutHandler(data) {
+        if (data.toString().match(/Your application is running/ig)) {
+            // console.log(`data : ${data.toString()}`);
+            this.doczStarted();
+        }
+        if (data.toString().match(/fail/ig)) {
+            console.error(`docz: ${data}`);
+        }
+    };
+
+    doczStarted(){
+        if(!this.localMode)
+            this.startProxy();
+        else{
+            console.log("doc build success");
+            this.docz.stdin.pause();
+            this.docz.kill();
+            process.exit(0);
+        }
+    }
+
+    stderrHandler(data) {
+        console.error(`docz: ${data}`);
+    };
+
+    closeHandler(code) {
+        if (code > 0) {
+            console.error(`docz exited with code ${code}`);
+            process.exit(code);
+        }
+        if (!this.restarting) {
+            process.exit(code);
+        }
+    };
+
+    startProxy() {
+        if (!this.runnerStarted)
+            this.runnerStarted = true;
+        else
+            return;
+
+        console.log('build success');
+        if (argv.test) {
+            //if test mode, the test succeed
+            process.exit(0);
+        }
+        else {
+            let expressPort = process.env.PORT || 3001;
+
+            app.use('/', proxy({ target: 'http://127.0.0.1:3000', changeOrigin: true }));
+
+            app.get('/gitlab', (req, res) => {
+
+                let gitlabEvent = req.getHeader('X-Gitlab-Event');
+
+                console.log(`receive gitlabEvent : ${gitlabEvent}`);
+                console.log(`status : ${req.object_attributes.status}`);
+
+                console.log(req);
+            });
+
+            app.listen(expressPort, () => console.log(`Runner listening on port ${expressPort}!`));
+        }
+    }
+
+    async start() {
+        if(!this.localMode)
+            await this.checkCurrentDoc();
+
+        console.log('start to build docz');
+        //need to install docz locally in the project
+        this.docz = spawn(
+            path.resolve(`./node_modules/.bin/docz${process.platform === 'win32' ? '.cmd' : ''}`),
+            ['dev'],
+            { cwd: this.currentPath },
+        );
+
+        this.docz.stdout.on('data', (data) => {this.stdoutHandler(data);});
+
+        this.docz.stderr.on('data', (data) => {this.stderrHandler(data);});
+
+        this.docz.on('close', (code) => {this.closeHandler(code);});
+
+        return new Promise((res, rej)=>{
+            this.rebootInterval = setInterval(()=>{
+                if(this.needToQuit){
+                    clearInterval(this.rebootInterval);
+                    res();
+                }
+            },100)
+        })
     }
 }
 
-let runner = new Runner();
-runner.checkFolders()
-      .then((e) => {
-          debugger;
-      })
-      .catch(e => {
-          debugger;
-      });
+try{
+    let runner = new Runner({ workingPath: argv.path });
 
-// console.log("start to build docz");
-// //need to install docz locally in the project
-// const docz = spawn(path.resolve(`./node_modules/.bin/docz${process.platform === 'win32' ? '.cmd' : ''}`), ['dev'],
-//     { cwd: path.resolve('.') });
-//
-// docz.stdout.on('data', (data) => {
-//     if (data.toString().match(/Your application is running/ig)) {
-//         console.log(`data : ${data.toString()}`);
-//         startRunner()
-//     }
-//     if (data.toString().match(/fail/ig)) {
-//         console.error(`docz: ${data}`);
-//     }
-//     // console.log(`stdout : ${data}`);
-// });
-//
-// docz.stderr.on('data', (data) => {
-//     console.error(`docz: ${data}`);
-// });
-//
-// docz.on('close', (code) => {
-//     if (code > 0) {
-//         console.error(`docz exited with code ${code}`);
-//         process.exit(code);
-//     }
-// });
+    runner.start()
+          .then((e) => {
+              debugger;
+          })
+          .catch(e => {
+              console.error(e);
+          });
+}
+catch (e) {
+    console.error(e);
+}
+
 //
 // let runnerStarted = false;
 // function startRunner() {

@@ -227,3 +227,8 @@ $RECYCLE.BIN/
 
 #docz cache
 .docz/
+
+
+/working/*
+!.gitkeep
+
