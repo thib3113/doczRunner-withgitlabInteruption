@@ -19,7 +19,7 @@ const docz = spawn(path.resolve(`./node_modules/.bin/docz${process.platform === 
 
 docz.stdout.on('data', (data) => {
     if (data.toString().match(/Your application is running/ig)) {
-        console.log('builded');
+        console.log(`data : ${data.toString()}`);
         startRunner()
     }
     if (data.toString().match(/fail/ig)) {
@@ -39,7 +39,12 @@ docz.on('close', (code) => {
     }
 });
 
+let runnerStarted = false;
 function startRunner() {
+    if(!runnerStarted)
+        runnerStarted = true;
+    else
+        return;
    console.log("build success");
    if (argv.test) {
         //if test mode, the test succeed
