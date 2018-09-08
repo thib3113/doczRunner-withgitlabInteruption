@@ -53,5 +53,5 @@ if (!argv.test) {
         console.log(req);
     });
 
-    app.listen(expressPort, () => console.log(`Example app listening on port ${expressPort}!`));
+    app.listen(expressPort, () => console.log(`Runner listening on port ${expressPort}!, Docz running on port 3000`));
 }

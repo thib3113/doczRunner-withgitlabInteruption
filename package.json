@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node runner.js --test",
-    "debug": "node %NODE_DEBUG_OPTION% runner.js --test",
+    "start": "node runner.js",
     "test": "node runner.js --test",
     "docz:dev": "docz dev",
     "docz:build": "docz build"
