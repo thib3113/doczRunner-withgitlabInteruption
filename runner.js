@@ -7,6 +7,8 @@ const app = express();
 const bodyParser = require('body-parser');
 const proxy = require('http-proxy-middleware');
 const simpleGit = require('simple-git');
+const rimraf = require('rimraf');
+const { promisify } = require('util');
 const argv = require('yargs')
     .command('$0 [path]', 'start the runner', (yargs) => {
         yargs.positional('sourcePath', {
@@ -23,11 +25,11 @@ app.use(bodyParser.json());
 class Runner {
     constructor(args) {
         this.localMode = false;
-        if(args.workingPath){
+        if (args.workingPath) {
             this.currentPath = args.workingPath;
             this.localMode = true;
         }
-        else{
+        else {
             this.basePath = path.resolve(__dirname);
             this.workingPath = path.join(this.basePath, 'working');
             this.currentPath = path.join(this.workingPath, 'current');
@@ -45,18 +47,28 @@ class Runner {
 
     cloneLast() {
         return new Promise(async (resolve, reject) => {
-
+            console.log('start to clone last documentation');
             let newPath = `docz-${(new Date()).getTime()}`;
             this.git.clone(this.gitRepoUrl, newPath, (err) => {
                 if (err) return reject(err);
 
+                console.log('clone end, rename folder with hash');
                 let timerPath = path.join(this.workingPath, newPath);
                 let git = simpleGit(timerPath);
                 new Promise((res, rej) => {
                     git.revparse(['HEAD'], (err, tag) => {
                         tag = tag.trim();
                         let tagPath = path.join(this.workingPath, `docz-${tag}`);
-                        fs.renameSync(timerPath, tagPath);
+                        if (fs.existsSync(tagPath)) {
+                            console.warn(
+                                'folder with hash name already exist, remove temp folder, and let the previous folder');
+                            rimraf.sync(timerPath);
+                        }
+                        else {
+                            fs.renameSync(timerPath, tagPath);
+                        }
+
+
                         resolve(tagPath);
                     });
                 });
@@ -75,7 +87,9 @@ class Runner {
         }
     }
 
-    setCurrent(currentPath){
+    setCurrent(currentPath) {
+        if (fs.existsSync(this.currentPath))
+            fs.unlinkSync(this.currentPath);
         fs.symlinkSync(currentPath, this.currentPath);
     }
 
@@ -89,11 +103,11 @@ class Runner {
         }
     };
 
-    doczStarted(){
-        if(!this.localMode)
+    doczStarted() {
+        if (!this.localMode)
             this.startProxy();
-        else{
-            console.log("doc build success");
+        else {
+            console.log('doc build success');
             this.docz.stdin.pause();
             this.docz.kill();
             process.exit(0);
@@ -128,7 +142,7 @@ class Runner {
         else {
             let expressPort = process.env.PORT || 3001;
 
-            app.use(function(req, res, next) {
+            app.use(async (req, res, next) => {
                 let gitlabEvent = req.header('X-Gitlab-Event');
                 let gitlabToken = req.header('X-Gitlab-Token');
                 //token qsdgsdthshgbyry534fs21df65841
@@ -141,12 +155,36 @@ class Runner {
                     console.error(e);
                 }
 
-                if(gitlabToken !== "qsdgsdthshgbyry534fs21df65841"){
+                if (gitlabToken !== process.env.GITLAB_TOKEN) {
                     //if not the correct token
                     next();
                 }
-                else{
+                else {
+                    try {
+                        if (req && req.body && req.body.object_attributes && req.body.object_attributes.status && req.body.object_attributes.status === 'success') {
+                            console.log('receive request to download new docz');
+
+                            //it's success, clone new repo, and kill me
+                            this.restarting = true;
+
+                            console.log('start cloning');
+                            let newPath = await this.cloneLast();
+                            console.log(`cloned into ${newPath}`);
+                            console.log(`kill docz process`);
+                            this.docz.stdin.pause();
+                            this.docz.kill();
+                            console.log(`set new current folder to ${newPath}`);
+                            await this.setCurrent(newPath);
+                            console.log(`wait quit`);
+                            this.needToQuit = true;
+                        }
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
                     res.status(200).send('Ok!');
+                    if (this.needToQuit)
+                        process.exit(0);
                 }
 
 
@@ -154,23 +192,16 @@ class Runner {
 
             app.use('/', proxy({ target: 'http://127.0.0.1:3000', changeOrigin: true }));
 
-            // app.get('/gitlab', (req, res) => {
-            //
-            //     let gitlabEvent = req.getHeader('X-Gitlab-Event');
-            //
-            //     console.log(`receive gitlabEvent : ${gitlabEvent}`);
-            //     console.log(`status : ${req.object_attributes.status}`);
-            //
-            //     console.log(req);
-            // });
-
             app.listen(expressPort, () => console.log(`Runner listening on port ${expressPort}!`));
         }
     }
 
     async start() {
-        if(!this.localMode)
+        if (!this.localMode)
             await this.checkCurrentDoc();
+
+        //check the number of folder, 10 will be enough
+        await this.checkNumberOfFolder(2);
 
         console.log('start to build docz');
         //need to install docz locally in the project
@@ -186,24 +217,41 @@ class Runner {
 
         this.docz.on('close', (code) => {this.closeHandler(code);});
 
-        return new Promise((res, rej)=>{
-            this.rebootInterval = setInterval(()=>{
-                if(this.needToQuit){
-                    clearInterval(this.rebootInterval);
-                    res();
-                }
-            },100)
-        })
+        return new Promise(() => {
+            setInterval(() => {
+                //just to keep process open
+            }, 100);
+        });
+    }
+
+    async checkNumberOfFolder(nbToRemove = 10) {
+        let readdir = promisify(fs.readdir);
+
+        let items = await readdir(this.workingPath);
+        items = items.filter(item => item !== 'current').map((fileName) => {
+                         return {
+                             name: fileName,
+                             time: fs.statSync(this.workingPath + '/' + fileName).mtime.getTime(),
+                         };
+                     })
+                     .sort(function (a, b) {
+                         return a.time - b.time;
+                     })
+                     .map(function (v) {
+                         return v.name;
+                     });
+
+        //remove older folders
+        items.slice(0, -nbToRemove).forEach(item => console.log(`remove ${item}`));
+        items.slice(0, -nbToRemove).forEach(item => rimraf.sync(path.join(this.workingPath, item)));
+        console.log(items);
     }
 }
 
-try{
+try {
     let runner = new Runner({ workingPath: argv.path });
 
     runner.start()
-          .then((e) => {
-              debugger;
-          })
           .catch(e => {
               console.error(e);
           });
