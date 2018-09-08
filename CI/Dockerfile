@@ -9,4 +9,4 @@ COPY ./package-lock.json .
 
 RUN npm i
 
-CMD [/bin/sh]
+CMD "/bin/sh"
