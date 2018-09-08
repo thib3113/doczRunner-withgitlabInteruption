@@ -6,6 +6,7 @@ const argv = require('yargs').argv;
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const proxy = require('http-proxy-middleware');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -44,7 +45,10 @@ docz.on('close', (code) => {
 if (!argv.test) {
     let expressPort = process.env.PORT||3001;
 
-    app.get('/', (req, res) => {
+    app.use('/', proxy({target: '127.0.0.1:3000', changeOrigin: true}));
+
+    app.get('/gitlab', (req, res) => {
+
         let gitlabEvent = req.getHeader("X-Gitlab-Event");
 
         console.log(`receive gitlabEvent : ${gitlabEvent}`);
