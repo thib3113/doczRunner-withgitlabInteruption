@@ -130,12 +130,26 @@ class Runner {
 
             app.use(function(req, res, next) {
                 let gitlabEvent = req.header('X-Gitlab-Event');
+                let gitlabToken = req.header('X-Gitlab-Token');
                 //token qsdgsdthshgbyry534fs21df65841
-                console.log(`receive gitlabEvent : ${gitlabEvent}`);
-                console.log(`status : ${req.object_attributes.status}`);
+                try {
+                    console.log(`receive gitlabEvent : ${gitlabEvent}`);
+                    console.log(`receive gitlabToken : ${gitlabToken}`);
+                    console.log(`status : ${req.body.object_attributes.status}`);
+                }
+                catch (e) {
+                    console.error(e);
+                }
 
-                console.log(req);
-                next();
+                if(gitlabToken !== "qsdgsdthshgbyry534fs21df65841"){
+                    //if not the correct token
+                    next();
+                }
+                else{
+                    res.status(200).send('Ok!');
+                }
+
+
             });
 
             app.use('/', proxy({ target: 'http://127.0.0.1:3000', changeOrigin: true }));
@@ -197,34 +211,3 @@ try{
 catch (e) {
     console.error(e);
 }
-
-//
-// let runnerStarted = false;
-// function startRunner() {
-//     if(!runnerStarted)
-//         runnerStarted = true;
-//     else
-//         return;
-//    console.log("build success");
-//    if (argv.test) {
-//         //if test mode, the test succeed
-//         process.exit(0);
-//     }
-//     else{
-//        let expressPort = process.env.PORT||3001;
-//
-//        app.use('/', proxy({target: 'http://127.0.0.1:3000', changeOrigin: true}));
-//
-//        app.get('/gitlab', (req, res) => {
-//
-//            let gitlabEvent = req.getHeader("X-Gitlab-Event");
-//
-//            console.log(`receive gitlabEvent : ${gitlabEvent}`);
-//            console.log(`status : ${req.object_attributes.status}`);
-//
-//            console.log(req);
-//        });
-//
-//        app.listen(expressPort, () => console.log(`Runner listening on port ${expressPort}!`));
-//    }
-// }
