@@ -44,3 +44,5 @@ else
         printf "${SSH_KEY_PASSPHRASE}\n" | ssh-add $HOME/.ssh/id_rsa
      fi
 fi
+
+exit 0
