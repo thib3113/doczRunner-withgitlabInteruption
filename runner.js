@@ -31,6 +31,7 @@ class Runner {
             this.basePath = path.resolve(__dirname);
             this.workingPath = path.join(this.basePath, 'working');
             this.currentPath = path.join(this.workingPath, 'current');
+            console.log(`workingPath : ${this.workingPath}, exist ? ${fs.existsSync(this.workingPath)}`);
             this.git = simpleGit(this.workingPath);
             this.gitRepoUrl = process.env.GIT_REPO;
             if (!this.gitRepoUrl)

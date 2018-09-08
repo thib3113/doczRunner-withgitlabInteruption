@@ -16,6 +16,6 @@ RUN chmod 755 /usr/local/bin/docker-entrypoint.sh
 RUN ln -s usr/local/bin/docker-entrypoint.sh / # backwards compat
 
 #generate working dir
-RUN mkdir workdir
+RUN mkdir working
 
 ENTRYPOINT ["docker-entrypoint.sh"]
