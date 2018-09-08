@@ -1,0 +1,31 @@
+{
+  "name": "citopia-styleguide",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node runner.js --test",
+    "debug": "node %NODE_DEBUG_OPTION% runner.js --test",
+    "test": "node runner.js --test",
+    "docz:dev": "docz dev",
+    "docz:build": "docz build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@***REMOVED***:citopia/styleguide.git"
+  },
+  "author": "Citopia",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/prop-types": "^15.5.5"
+  },
+  "dependencies": {
+    "docz": "^0.11.1",
+    "express": "^4.16.3",
+    "prop-types": "^15.6.2",
+    "react": "^16.5.0",
+    "react-google-maps": "^9.4.5",
+    "yargs": "^12.0.2",
+    "body-parser": "latest"
+  }
+}
