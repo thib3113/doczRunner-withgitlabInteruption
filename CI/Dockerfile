@@ -1,12 +1,4 @@
-FROM node:10-alpine
+FROM thib3113/doczrunner-withgitlabinteruption:latest
 MAINTAINER Citopia <citopia.fr>
-
-WORKDIR /app
-
-COPY ../runner.js .
-COPY ../package.json .
-COPY ../package-lock.json .
-
-RUN npm i
 
 CMD "/bin/sh"
