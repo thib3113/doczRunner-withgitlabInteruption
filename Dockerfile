@@ -1,13 +1,13 @@
 FROM node:10-alpine
 MAINTAINER Citopia <citopia.fr>
 
-RUN apk add --no-cache git bash openssh-client
+RUN apk add --no-cache git bash openssh-client yarn
 
 WORKDIR /app
 
 COPY ./package.json .
 COPY ./package-lock.json .
-RUN npm i
+RUN yarn install
 
 COPY ./runner.js .
 
