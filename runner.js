@@ -67,7 +67,9 @@ class Runner {
                         console.log('start cloning');
                         let currentPath = await this.cloneLast();
                         this.setCurrent(currentPath);
-                        console.log("new version ready")
+                        console.log("new version ready");
+
+                        this.checkNumberOfFolder().catch(e=>console.error(e));
                     }
                 }
                 catch (e) {
@@ -100,7 +102,7 @@ class Runner {
             this.git.clone(this.gitRepoUrl, newPath, (err) => {
                 if (err) return reject(err);
 
-                console.log('clone end, rename folder with hash');
+                console.log('clone end, start the build');
                 let timerPath = path.join(this.workingPath, newPath);
                 let git = simpleGit(timerPath);
                 new Promise((res, rej) => {
@@ -123,7 +125,7 @@ class Runner {
 
                                 await new Promise((res, rej) => {
                                     this.process.stdout.on('data', (data) => {
-                                        console.log(data.toString());
+                                        // console.log(data.toString());
                                         if (data.toString().match(/fail/ig)) {
                                             rej(`docz: ${data}`);
                                         }
@@ -172,6 +174,7 @@ class Runner {
     }
 
     setCurrent(currentPath) {
+        console.log(`set new Current folder to ${currentPath}`);
         if (fs.existsSync(this.currentPath))
             fs.unlinkSync(this.currentPath);
 
@@ -312,6 +315,7 @@ class Runner {
     }
 
     async checkNumberOfFolder(nbToRemove = 10) {
+        console.log("check old folders");
         let readdir = promisify(fs.readdir);
 
         let items = await readdir(this.workingPath);
