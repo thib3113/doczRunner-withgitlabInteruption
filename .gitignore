@@ -232,3 +232,5 @@ $RECYCLE.BIN/
 /working/*
 !.gitkeep
 
+
+package-lock\.json
