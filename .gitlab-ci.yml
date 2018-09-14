@@ -12,4 +12,4 @@ build-master:
   stage: build
   script:
     - docker build --pull -t $IMAGE_NAME .
-    - docker run -p 3001:3001 -e "CI_MODE=true" -e "GIT_REPO=https://***REMOVED***/citopia/styleguide.git" -v "$(pwd)"/working:/app/working $IMAGE_NAME
+    - docker run -p 3001:3001 -e "CI_MODE=true" -e "GIT_REPO=https://git2-web.jvsonline.fr/citopia/styleguide.git" -v "$(pwd)"/working:/app/working $IMAGE_NAME
