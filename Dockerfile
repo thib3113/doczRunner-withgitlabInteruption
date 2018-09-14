@@ -3,6 +3,8 @@ MAINTAINER Citopia <citopia.fr>
 
 RUN apk add --no-cache git bash openssh-client yarn
 
+ENV CI_MODE false
+
 WORKDIR /app
 
 COPY ./package.json .

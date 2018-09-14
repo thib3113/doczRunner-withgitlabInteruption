@@ -13,12 +13,13 @@ Env
 ---
 | Key | Description |
 |--|--|
-|PORT|The port to be used by the express proxy [3001]|
+| PORT |The port to be used by the express proxy [3001]|
 | GIT_REPO | The url to the git repository ( ssh or HTTPS ) |
-|SSH_HOST| URL of the git host ( site.com ), if not defined, doesn't support ssh url|
-|SSH_KEY| The private key to use with SSH|
-|SSH_KEY_PASSPHRASE| the passphrase of the SSH key (**Doesn't work**)|
+| SSH_HOST | URL of the git host ( site.com ), if not defined, doesn't support ssh url|
+| SSH_KEY | The private key to use with SSH|
+| SSH_KEY_PASSPHRASE | the passphrase of the SSH key (**Doesn't work**)|
 | GITLAB_TOKEN | Token used by gitlab webhook |
+| CI_MODE | Application will exit before starting webserver [false] |
 
 All of this env work with _FILE for secrets .
 Example, insteed of sending SSH_KEY, you can use :

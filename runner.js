@@ -290,6 +290,12 @@ class Runner {
             await this.checkNumberOfFolder(10);
         }
 
+        //if it's CIMode exit before starting httpd
+        if(process.env.CI_MODE){
+            console.log("Launched in CI_MODE, CI of doc success");
+            process.exit(0);
+        }
+
 
         console.log('start to build docz');
         //need to install docz locally in the project
