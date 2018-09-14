@@ -5,8 +5,11 @@ image: docker:latest
 services:
   - docker:dind
 
+variables:
+  IMAGE_NAME: test_image
+
 build-master:
   stage: build
   script:
-    - docker build --pull -t test_image .
-    - docker run -p 3001:3001 -e "CI_MODE=true" -e "GIT_REPO=https://***REMOVED***/citopia/styleguide.git" -v "$(pwd)"/working:/app/working
+    - docker build --pull -t $IMAGE_NAME .
+    - docker run -p 3001:3001 -e "CI_MODE=true" -e "GIT_REPO=https://***REMOVED***/citopia/styleguide.git" -v "$(pwd)"/working:/app/working $IMAGE_NAME
