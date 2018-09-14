@@ -234,3 +234,4 @@ $RECYCLE.BIN/
 
 package-lock\.json
 yarn\.lock
+/..bfg-report/
