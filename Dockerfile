@@ -8,7 +8,6 @@ ENV CI_MODE false
 WORKDIR /app
 
 COPY ./package.json .
-COPY ./package-lock.json .
 RUN yarn install
 
 COPY ./runner.js .
