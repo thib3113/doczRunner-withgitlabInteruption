@@ -25,7 +25,10 @@ app.use(bodyParser.json());
 
 class Runner {
     constructor(args) {
-        console.log(`GITLAB_TOKEN ${process.env.GITLAB_TOKEN}`);
+        if(process.env.GITLAB_TOKEN)
+            console.log(`GITLAB_TOKEN ${process.env.GITLAB_TOKEN}`);
+        else
+            console.log(`NO GITLAB_TOKEN`);
 
         this.localMode = false;
         if (args.workingPath) {
