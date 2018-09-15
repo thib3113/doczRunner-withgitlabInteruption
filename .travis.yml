@@ -1,0 +1,13 @@
+dist: trusty
+
+sudo: required
+
+services:
+  - docker
+  
+env:
+  - IMAGE_NAME: thib3113/doczrunner-withgitlabinteruption
+
+script:
+  - docker build --pull -t $IMAGE_NAME .
+  - docker run -p 3001:3001 -e "CI_MODE=true" -e "GIT_REPO=$GIT_REPO" -v "$(pwd)"/working:/app/working $IMAGE_NAME
