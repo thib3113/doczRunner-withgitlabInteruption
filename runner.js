@@ -10,6 +10,7 @@ const simpleGit = require('simple-git');
 const rimraf = require('rimraf');
 const { promisify } = require('util');
 const ncp = promisify(require("ncp"));
+const boolean = require('boolean');
 const argv = require('yargs')
     .command('$0 [path]', 'start the runner', (yargs) => {
         yargs.positional('sourcePath', {
@@ -25,6 +26,10 @@ app.use(bodyParser.json());
 
 class Runner {
     constructor(args) {
+        if(boolean(process.env.CI_MODE)){
+            console.log("CI_MODE: CI mode is activated");
+        }
+
         if(process.env.GITLAB_TOKEN)
             console.log(`GITLAB_TOKEN ${process.env.GITLAB_TOKEN}`);
         else
@@ -183,107 +188,10 @@ class Runner {
 
         //windows doesn't support symlink
         if (process.platform === 'win32')
-            debugger;
+            console.warn("win32 doesn't support symlink");
         else
             fs.symlinkSync(currentPath, this.currentPath);
     }
-
-    // stdoutHandler(data) {
-    //     if (data.toString().match(/Compiled successfully/ig)) {
-    //         // console.log(`data : ${data.toString()}`);
-    //         this.doczStarted();
-    //     }
-    //     if (data.toString().match(/fail/ig)) {
-    //         console.error(`docz: ${data}`);
-    //     }
-    // };
-    //
-    // doczStarted() {
-    //     if (!this.localMode)
-    //         this.startProxy();
-    //     else {
-    //         console.log('doc build success');
-    //         this.docz.stdin.pause();
-    //         this.docz.kill();
-    //         process.exit(0);
-    //     }
-    // }
-
-    // stderrHandler(data) {
-    //     console.error(`docz: ${data}`);
-    // };
-    //
-    // closeHandler(code) {
-    //     if (code > 0) {
-    //         console.error(`docz exited with code ${code}`);
-    //         process.exit(code);
-    //     }
-    //     if (!this.restarting) {
-    //         process.exit(code);
-    //     }
-    // };
-
-    // startProxy() {
-    //     if (!this.runnerStarted)
-    //         this.runnerStarted = true;
-    //     else
-    //         return;
-    //
-    //     console.log('build success');
-    //     if (argv.test) {
-    //         //if test mode, the test succeed
-    //         process.exit(0);
-    //     }
-    //     else {
-    //         let expressPort = process.env.PORT || 3001;
-    //
-    //         app.use(async (req, res, next) => {
-    //             let gitlabEvent = req.header('X-Gitlab-Event');
-    //             let gitlabToken = req.header('X-Gitlab-Token');
-    //
-    //             if (gitlabToken !== process.env.GITLAB_TOKEN) {
-    //                 if (gitlabToken)
-    //                     console.warn(`bad gitlab token : ${gitlabToken}`);
-    //
-    //                 //if not the correct token
-    //                 next();
-    //             }
-    //             else {
-    //                 try {
-    //                     if (gitlabEvent === 'Pipeline Hook' && req && req.body && req.body.object_attributes && req.body.object_attributes.status && req.body.object_attributes.status === 'success') {
-    //                         console.log('receive request to download new docz');
-    //
-    //                         //it's success, clone new repo, and kill me
-    //                         this.restarting = true;
-    //
-    //                         console.log('start cloning');
-    //                         let newPath = await this.cloneLast();
-    //                         console.log(`cloned into ${newPath}`);
-    //                         console.log(`kill docz process`);
-    //                         this.docz.stdin.pause();
-    //                         this.docz.kill();
-    //                         console.log(`set new current folder to ${newPath}`);
-    //                         await this.setCurrent(newPath);
-    //                         console.log(`wait quit`);
-    //                         this.needToQuit = true;
-    //                     }
-    //                 }
-    //                 catch (e) {
-    //                     console.error(e);
-    //                 }
-    //                 res.status(200).send('Ok!');
-    //                 if (this.needToQuit)
-    //                     process.exit(0);
-    //             }
-    //
-    //
-    //         });
-    //
-    //         app.use('/', proxy({ target: 'http://127.0.0.1:3000', changeOrigin: true }));
-    //
-    //         app.listen(expressPort, () => console.log(`Runner listening on port ${expressPort}!`));
-    //     }
-    // }
 
     async start() {
         if (!this.localMode) {
@@ -294,8 +202,8 @@ class Runner {
         }
 
         //if it's CIMode exit before starting httpd
-        if(process.env.CI_MODE){
-            console.log("Launched in CI_MODE, CI of doc success");
+        if(boolean(process.env.CI_MODE)){
+            console.log("CI_MODE: CI of doc success");
             process.exit(0);
         }
 
@@ -328,7 +236,7 @@ class Runner {
         let readdir = promisify(fs.readdir);
 
         let items = await readdir(this.workingPath);
-        items = items.filter(item => item !== 'current').map((fileName) => {
+        items = items.filter(item => ['current', '.gitkeep'].indexOf(item) < 0).map((fileName) => {
                          return {
                              name: fileName,
                              time: fs.statSync(this.workingPath + '/' + fileName).mtime.getTime(),
@@ -344,7 +252,7 @@ class Runner {
         //remove older folders
         items.slice(0, -nbToRemove).forEach(item => console.log(`remove ${item}`));
         items.slice(0, -nbToRemove).forEach(item => rimraf.sync(path.join(this.workingPath, item)));
-        console.log(items);
+        // console.log(items);
     }
 }
 
