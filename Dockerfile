@@ -19,4 +19,6 @@ RUN ln -s usr/local/bin/docker-entrypoint.sh /
 #generate working dir
 RUN mkdir working
 
+VOLUME /app/workding
+
 ENTRYPOINT ["docker-entrypoint.sh"]
