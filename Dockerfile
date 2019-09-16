@@ -1,4 +1,4 @@
-FROM node:10-alpine
+FROM node:current-alpine
 LABEL maintainer="citopia <citopia.fr>" version=1.0
 
 RUN apk add --no-cache git bash openssh-client yarn
