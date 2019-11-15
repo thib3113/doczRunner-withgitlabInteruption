@@ -27,7 +27,7 @@
     "@types/react": "^16.9.1",
     "@types/yargs": "^13.0.0",
     "docz": "^1.0.0",
-    "react-dom": "^16.6.3"
+    "react-dom": "^16.12.0"
   },
   "dependencies": {
     "body-parser": "latest",
