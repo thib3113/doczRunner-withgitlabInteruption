@@ -40,6 +40,6 @@
     "react-google-maps": "^9.4.5",
     "rimraf": "^3.0.0",
     "simple-git": "^1.96.0",
-    "yargs": "^15.0.1"
+    "yargs": "^15.3.0"
   }
 }
