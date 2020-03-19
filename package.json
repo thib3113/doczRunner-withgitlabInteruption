@@ -36,7 +36,7 @@
     "http-proxy-middleware": "^1.0.0",
     "ncp": "^2.0.0",
     "prop-types": "^15.6.2",
-    "react": "^16.6.3",
+    "react": "^16.13.1",
     "react-google-maps": "^9.4.5",
     "rimraf": "^3.0.0",
     "simple-git": "^1.96.0",
